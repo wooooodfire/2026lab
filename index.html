@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 宜蘭森呼吸與溫泉之旅 - 互動行程表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+        body { font-family: 'Microsoft JhengHei', sans-serif; background-color: #f3f4f6; overflow: hidden; }
+        .h-screen-custom { height: 100vh; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 40px;
+            bottom: -20px;
+            width: 2px;
+            background-color: #e5e7eb;
+            z-index: 0;
+        }
+        .timeline-item:last-child .timeline-line { display: none; }
+        .active-card { border-left: 4px solid #0d9488; background-color: #f0fdfa; }
+        #map { height: 50%; width: 100%; z-index: 10; }
+        #details-panel { height: 50%; overflow-y: auto; }
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <nav class="bg-teal-700 text-white p-4 shadow-lg flex justify-between items-center z-50 relative">
+        <div>
+            <h1 class="text-xl font-bold"><i class="fa-solid fa-map-location-dot mr-2"></i>宜蘭森呼吸與溫泉之旅</h1>
+            <p class="text-xs opacity-80 mt-1">日期: 2026/01/27 - 01/29 | 人數: 11人+ | 總預算估計: <span id="nav-total-cost"></span></p>
+        </div>
+        <div class="space-x-2">
+            <button onclick="exportJSON()" class="bg-teal-800 hover:bg-teal-900 text-xs px-3 py-2 rounded transition"><i class="fa-solid fa-code mr-1"></i> 下載 JSON</button>
+            <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-500 text-xs px-3 py-2 rounded transition"><i class="fa-solid fa-print mr-1"></i> 列印</button>
+        </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-80px)]">
+        
+        <div class="w-full md:w-5/12 lg:w-4/12 bg-white border-r border-gray-200 flex flex-col shadow-xl z-20">
+            <div class="flex border-b overflow-x-auto" id="day-tabs">
+                </div>
+
+            <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 relative">
+                </div>
+
+            <div class="bg-gray-50 p-3 border-t text-sm text-gray-500">
+                <div class="flex justify-between items-center cursor-pointer" onclick="toggleChecklist()">
+                    <span class="font-bold"><i class="fa-solid fa-clipboard-check mr-1"></i> 每日檢查清單</span>
+                    <i class="fa-solid fa-chevron-up" id="checklist-arrow"></i>
+                </div>
+                <div id="checklist-content" class="hidden mt-2 grid grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 身份證/健保卡</label>
+                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 雨具/保暖衣物</label>
+                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 現金/票券</label>
+                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 行動電源</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="hidden md:flex flex-col w-7/12 lg:w-8/12 h-full relative">
+            
+            <div id="map"></div>
+
+            <div id="details-panel" class="bg-gray-50 p-6 border-t-4 border-teal-600 shadow-inner">
+                <div id="empty-state" class="flex flex-col items-center justify-center h-full text-gray-400">
+                    <i class="fa-solid fa-arrow-pointer text-4xl mb-4"></i>
+                    <p>請點選左側行程或地圖標記以查看詳細資訊</p>
+                    <p class="text-sm mt-2">住宿地址: 宜蘭縣三星鄉三星路二段601巷15弄100號</p>
+                </div>
+
+                <div id="detail-content" class="hidden h-full flex flex-col">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span id="detail-tag" class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full font-bold mb-2 inline-block">景點</span>
+                            <h2 id="detail-title" class="text-2xl font-bold text-gray-800"></h2>
+                            <p id="detail-time" class="text-sm text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i> <span></span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-orange-600" id="detail-cost"></p>
+                            <p class="text-xs text-gray-400">預估費用</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+                        <div class="lg:col-span-2 space-y-4">
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <h3 class="font-bold text-gray-700 mb-2 border-b pb-1">介紹與備註</h3>
+                                <p id="detail-desc" class="text-gray-600 text-sm leading-relaxed"></p>
+                                <div id="detail-items" class="mt-3 flex flex-wrap gap-2"></div>
+                            </div>
+                            
+                            <div class="flex gap-3 mt-4">
+                                <a id="btn-google" href="#" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded shadow transition flex items-center justify-center">
+                                    <i class="fa-solid fa-location-arrow mr-2"></i> Google 導航
+                                </a>
+                                <a id="btn-website" href="#" target="_blank" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white text-center py-2 rounded shadow transition flex items-center justify-center">
+                                    <i class="fa-solid fa-globe mr-2"></i> 官方網站
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="bg-white p-3 rounded shadow-sm">
+                                <div class="text-xs text-gray-400">地點 / 地址</div>
+                                <div id="detail-addr" class="text-sm font-medium truncate"></div>
+                            </div>
+                            <div class="bg-white p-3 rounded shadow-sm">
+                                <div class="text-xs text-gray-400">相關連結</div>
+                                <div class="text-sm">
+                                    <a id="link-route" href="#" target="_blank" class="text-teal-600 hover:underline block mb-1">
+                                        <i class="fa-solid fa-route mr-1"></i>前往此處路線
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Data Structure ---
+        const itineraryData = {
+            meta: {
+                groupSize: "11人以上團體",
+                accommodation: "宜蘭縣三星鄉三星路二段601巷15弄100號",
+                accommodationCoord: [24.666707221704357, 121.69852736270126]
+            },
+            days: [
+                {
+                    id: "day1",
+                    date: "1/27 (二)",
+                    title: "出發與礁溪溫泉",
+                    stops: [
+                        { time: "09:00-11:00", name: "高雄 → 台北車站(高鐵)", type: "transport", cost: "NT$1,115", desc: "全員集合出發，搭乘高鐵前往台北。", lat: null, lng: null, items: ["高鐵"], web: "", mapUrl: "", addr: "" },
+                        { time: "11:00-11:10", name: "台北車站集合", type: "gather", cost: "", desc: "確認人數與行李。", lat: 25.0478, lng: 121.5170, items: [], web: "", mapUrl: "https://goo.gl/maps/TaipeiMain", addr: "台北市中正區" },
+                        { time: "11:10-12:10", name: "台北 → 福哥石窯雞 (包車)", type: "transport", cost: "NT$1,500 (車資分攤)", desc: "搭乘包車前往宜蘭礁溪。", lat: null, lng: null, items: [], web: "", mapUrl: "", addr: "" },
+                        { time: "12:10-13:30", name: "午餐: 福哥石窯雞-礁溪總店", type: "food", cost: "NT$500", desc: "享用宜蘭特色石窯雞料理。", lat: 24.836912655727083, lng: 121.78568772830744, items: ["福哥石窯雞-礁溪總店"], web: "", mapUrl: "https://maps.app.goo.gl/uTAvAcapRL62Q53A9,262宜蘭縣礁溪鄉白雲三路11號", addr: "宜蘭縣礁溪鄉" },
+                        { time: "13:30-16:00", name: "蘭陽博物館", type: "sight", cost: "NT$110", desc: "參觀獨特單面山建築造型博物館，了解宜蘭地理人文。", lat: 24.8687667354629, lng: 121.83277354363076, items: ["蘭陽博物館"], web: "", mapUrl: "https://maps.app.goo.gl/Ph6DKoN9odgNYPaH9,261宜蘭縣頭城鎮青雲路三段750號", addr: "宜蘭縣頭城鎮" },
+                        { time: "16:00-18:00", name: "星河傳說溫泉水世界", type: "activity", cost: "NT$250", desc: "全宜蘭最大溫泉樂園，享受放鬆時光。", lat: 24.827735538626257, lng: 121.77324533386637, items: ["中冠礁溪大飯店"], web: "https://www.art-spa-hotel.com.tw/", mapUrl: "https://maps.app.goo.gl/NsnVwrLLwbMfN8Rk6,262宜蘭縣礁溪鄉德陽路6號", addr: "宜蘭縣礁溪鄉" },
+                        { time: "18:00-19:30", name: "晚餐: 礁溪庄櫻桃谷", type: "food", cost: "NT$800", desc: "品嚐知名的櫻桃鴨料理。", lat: 24.836503935551125, lng: 121.78593645396221, items: [], web: "", mapUrl: "https://maps.app.goo.gl/gknPAXUWuvHDQcPY7,262宜蘭縣礁溪鄉德陽路6號", addr: "宜蘭縣礁溪鄉" },
+                        { time: "19:30~", name: "回民宿 (三星鄉)", type: "rest", cost: "NT$1,000", desc: "入住 Taco House 民宿。整理行李與休息。", lat: 24.666707221704357, lng: 121.69852736270126, items: [], web: "https://twstay.com/RWD2/index.aspx?BNB=tacoesubooking", mapUrl: "https://maps.app.goo.gl/PfXS2nfVGE8oabwv6,26644宜蘭縣三星鄉三星路二段601巷15弄100號", addr: "宜蘭縣三星鄉三星路二段601巷15弄100號" }
+                    ]
+                },
+                {
+                    id: "day2",
+                    date: "1/28 (三)",
+                    title: "太平山森林浴",
+                    stops: [
+                        { time: "09:30-10:00", name: "民宿集合", type: "gather", cost: "", desc: "早晨集合，準備出發。", lat: 24.666707221704357, lng: 121.69852736270126, items: [], web: "", mapUrl: "", addr: "民宿" },
+                        { time: "10:00-11:30", name: "民宿 → 太平山莊餐廳", type: "transport", cost: "", desc: "車程約 1.5 小時，前往太平山。", lat: null, lng: null, items: [], web: "", mapUrl: "", addr: "" },
+                        { time: "11:30-13:00", name: "午餐: 太平山莊餐廳", type: "food", cost: "NT$400", desc: "在山林間享用午餐。", lat: 24.49332839003274, lng: 121.53625473512425, items: ["太平山國家森林遊樂區入口網-餐飲服務"], web: "", mapUrl: "https://maps.app.goo.gl/YvzhQX5PnEtdVKu37,267宜蘭縣大同鄉太平巷58-1號", addr: "太平山" },
+                        { time: "13:00-16:00", name: "太平山國家森林公園", type: "sight", cost: "NT$150", desc: "漫步森林步道，可搭乘蹦蹦車（需現場購票）。", lat: 24.49800149525048, lng: 121.5349489551065, items: ["太平山森林遊樂區", "蹦蹦車"], web: "https://tps.forest.gov.tw/", mapUrl: "https://maps.app.goo.gl/JQU731VF8aNr8wLU9,267宜蘭縣大同鄉太平巷58之1號", addr: "太平山" },
+                        { time: "16:00-17:30", name: "下山前往羅東", type: "transport", cost: "", desc: "車程約 1.5 小時。", lat: null, lng: null, items: [], web: "", mapUrl: "", addr: "" },
+                        { time: "17:30-20:00", name: "羅東夜市", type: "food", cost: "個人消費", desc: "宜蘭最知名的夜市，自行覓食。", lat: 24.677519480047078, lng: 121.76822012526692, items: [], web: "", mapUrl: "https://maps.app.goo.gl/5SfN2atmmniiczU3A,265宜蘭縣羅東鎮興東路69號", addr: "宜蘭縣羅東鎮" },
+                        { time: "20:00~", name: "回民宿", type: "rest", cost: "NT$1,000", desc: "返回三星鄉民宿。", lat: 24.666707221704357, lng: 121.69852736270126, items: [], web: "", mapUrl: "", addr: "民宿" }
+                    ]
+                },
+                {
+                    id: "day2_rain",
+                    date: "1/28 (三) 雨備",
+                    title: "室內文化與動感",
+                    isRain: true,
+                    stops: [
+                        { time: "09:30-10:00", name: "民宿集合", type: "gather", cost: "", desc: "早晨集合。", lat: 24.666707221704357, lng: 121.69852736270126, items: [], web: "", mapUrl: "", addr: "民宿" },
+                        { time: "10:30-12:30", name: "宜蘭傳藝園區", type: "sight", cost: "NT$120", desc: "雨天首選，體驗傳統工藝與表演。", lat: 24.686378995704747, lng: 121.82395619640673, items: ["宜蘭傳藝園區"], web: "https://www.px-sunmake.org.tw/", mapUrl: "https://maps.app.goo.gl/4RS2YbMGtwjVPQv39,268宜蘭縣五結鄉五濱路二段201號", addr: "宜蘭縣五結鄉" },
+                        { time: "12:30-14:00", name: "中餐 (待定)", type: "food", cost: "", desc: "於傳藝園區內或周邊用餐。", lat: null, lng: null, items: [], web: "", mapUrl: "", addr: "" },
+                        { time: "14:00-17:00", name: "空氣島彈跳工廠", type: "activity", cost: "NT$500", desc: "室內極限運動，適合團體放電。", lat: 24.59602981881871, lng: 121.85672281349535, items: ["空氣島彈跳工廠"], web: "", mapUrl: "https://maps.app.goo.gl/Yb9LCHNPEaxqmKxw8,270宜蘭縣蘇澳鎮港區路8號", addr: "宜蘭縣蘇澳鎮" },
+                        { time: "17:30-20:00", name: "羅東夜市", type: "food", cost: "個人消費", desc: "雨天逛街請攜帶雨具。", lat: 24.677519480047078, lng: 121.76822012526692, items: [], web: "", mapUrl: "https://maps.app.goo.gl/5SfN2atmmniiczU3A,265宜蘭縣羅東鎮興東路69號", addr: "羅東鎮" },
+                        { time: "20:00~", name: "回民宿", type: "rest", cost: "", desc: "返回休息。", lat: 24.666707221704357, lng: 121.69852736270126, items: [], web: "", mapUrl: "", addr: "民宿" }
+                    ]
+                },
+                {
+                    id: "day3",
+                    date: "1/29 (四)",
+                    title: "萌寵與手作",
+                    stops: [
+                        { time: "10:00-12:00", name: "張美阿嬤農場", type: "activity", cost: "NT$200", desc: "熱門景點，餵食水豚與梅花鹿體驗。", lat: 24.675008463330684, lng: 121.67556508466048, items: ["張美阿嬤農場"], web: "", mapUrl: "https://maps.app.goo.gl/gDLFhRnSbRUuufaw9,266宜蘭縣三星鄉行健溪一路二段161號", addr: "宜蘭縣三星鄉" },
+                        { time: "12:00-13:00", name: "午餐: 樹懶餐廳", type: "food", cost: "NT$500", desc: "農場周邊特色餐廳。", lat: 24.681128507670874, lng: 121.67592878650466, items: [], web: "", mapUrl: "https://maps.app.goo.gl/BohoRJ2xzjwxmWc99,266宜蘭縣三星鄉萬富七路78號", addr: "宜蘭縣三星鄉" },
+                        { time: "13:00-15:30", name: "三星四季青花瓷", type: "activity", cost: "NT$600", desc: "器皿體驗｜青花瓷拓繪 DIY。", lat: 24.671655013390385, lng: 121.67625953067905, items: ["三星四季青花瓷"], web: "https://www.web.pic.net.tw/", mapUrl: "https://maps.app.goo.gl/XZuLYknkVNtKPRix7,266宜蘭縣三星鄉行健二路二段275號", addr: "宜蘭縣三星鄉" },
+                        { time: "15:30-17:00", name: "宜蘭 → 台北車站", type: "transport", cost: "", desc: "搭車返回台北，結束旅程。", lat: 25.0478, lng: 121.5170, items: [], web: "", mapUrl: "", addr: "台北車站" }
+                    ]
+                }
+            ]
+        };
+
+        // --- 2. State Management ---
+        let map;
+        let markers = [];
+        let polyline;
+        let activeDayId = "day1";
+
+        // --- 3. Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            renderTabs();
+            renderTimeline(activeDayId);
+            calculateTotalCost();
+        });
+
+        // --- 4. Logic Functions ---
+
+        function initMap() {
+            // Center roughly on Yilan
+            map = L.map('map').setView([24.70, 121.75], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        function calculateTotalCost() {
+            let total = 0;
+            // A simplified logic summing numbers found in cost strings for Day 1, 2(normal), 3
+            // In a real app, cost should be a number type.
+            const totalEl = document.getElementById('nav-total-cost');
+            // Hardcoded based on user input for display consistency
+            totalEl.innerText = "約 NT$8,125 /人"; 
+        }
+
+        function toggleChecklist() {
+            const content = document.getElementById('checklist-content');
+            const arrow = document.getElementById('checklist-arrow');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                arrow.classList.remove('fa-chevron-up');
+                arrow.classList.add('fa-chevron-down');
+            } else {
+                content.classList.add('hidden');
+                arrow.classList.add('fa-chevron-up');
+                arrow.classList.remove('fa-chevron-down');
+            }
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('day-tabs');
+            tabsContainer.innerHTML = '';
+            
+            itineraryData.days.forEach(day => {
+                const btn = document.createElement('button');
+                const isRain = day.isRain ? 'text-blue-600' : 'text-gray-700';
+                const bgClass = activeDayId === day.id ? 'border-b-4 border-teal-600 bg-gray-50 font-bold' : 'hover:bg-gray-50';
+                
+                btn.className = `flex-shrink-0 px-6 py-3 text-sm focus:outline-none transition ${bgClass} ${isRain}`;
+                btn.innerHTML = day.isRain ? `<i class="fa-solid fa-cloud-showers-heavy mr-1"></i> ${day.date}` : day.date;
+                btn.onclick = () => {
+                    activeDayId = day.id;
+                    renderTabs(); // Re-render to update active style
+                    renderTimeline(day.id);
+                };
+                tabsContainer.appendChild(btn);
+            });
+        }
+
+        function renderTimeline(dayId) {
+            const container = document.getElementById('itinerary-list');
+            container.innerHTML = '';
+            
+            const dayData = itineraryData.days.find(d => d.id === dayId);
+            if(!dayData) return;
+
+            // Header for Day
+            const dayHeader = document.createElement('div');
+            dayHeader.className = "mb-4 pb-2 border-b";
+            dayHeader.innerHTML = `<h2 class="text-xl font-bold text-teal-800">${dayData.title}</h2><p class="text-xs text-gray-500">點擊卡片查看地圖與詳情</p>`;
+            container.appendChild(dayHeader);
+
+            // Clear previous map markers
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            if(polyline) map.removeLayer(polyline);
+
+            const routePoints = [];
+
+            dayData.stops.forEach((stop, index) => {
+                // 1. Create List Item
+                const card = document.createElement('div');
+                card.className = "timeline-item relative pl-8 pb-8 group cursor-pointer border-l-4 border-transparent hover:bg-gray-50 p-2 rounded transition";
+                card.dataset.index = index;
+                
+                // Icon Logic
+                let iconClass = "fa-location-dot";
+                let colorClass = "bg-teal-500";
+                if(stop.type === 'food') { iconClass = "fa-utensils"; colorClass = "bg-orange-500"; }
+                if(stop.type === 'transport') { iconClass = "fa-bus"; colorClass = "bg-blue-500"; }
+                if(stop.type === 'rest') { iconClass = "fa-bed"; colorClass = "bg-indigo-500"; }
+                if(stop.type === 'gather') { iconClass = "fa-users"; colorClass = "bg-gray-500"; }
+
+                card.innerHTML = `
+                    <div class="timeline-line"></div>
+                    <div class="absolute left-0 top-0 w-10 h-10 -ml-5 flex items-center justify-center rounded-full ${colorClass} text-white shadow-md z-10 border-4 border-white">
+                        <i class="fa-solid ${iconClass} text-sm"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">${stop.time}</span>
+                        <h3 class="font-bold text-gray-800 text-lg mt-1 group-hover:text-teal-700 transition">${stop.name}</h3>
+                        <p class="text-sm text-gray-500 line-clamp-2">${stop.desc}</p>
+                        ${stop.cost ? `<span class="text-xs font-medium text-orange-600 mt-1 block">${stop.cost}</span>` : ''}
+                    </div>
+                `;
+
+                // Click Event
+                card.onclick = () => {
+                    // UI Highlight
+                    document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active-card'));
+                    card.classList.add('active-card');
+                    
+                    // Show Detail
+                    updateDetails(stop);
+                    
+                    // Map Pan
+                    if(stop.lat && stop.lng) {
+                        map.flyTo([stop.lat, stop.lng], 14);
+                        markers[index].openPopup();
+                    }
+                };
+
+                container.appendChild(card);
+
+                // 2. Add Map Marker
+                if (stop.lat && stop.lng) {
+                    const marker = L.marker([stop.lat, stop.lng]).addTo(map);
+                    marker.bindPopup(`<b>${stop.name}</b><br>${stop.time}`);
+                    marker.on('click', () => {
+                        updateDetails(stop);
+                        // Highlight list item
+                        document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active-card'));
+                        card.classList.add('active-card');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                    markers[index] = marker;
+                    routePoints.push([stop.lat, stop.lng]);
+                } else {
+                     // Placeholder for non-mapped items to keep index sync
+                     markers[index] = { openPopup: () => {} }; 
+                }
+            });
+
+            // Draw Route Line
+            if (routePoints.length > 1) {
+                polyline = L.polyline(routePoints, {color: '#0d9488', weight: 4, opacity: 0.7, dashArray: '10, 10'}).addTo(map);
+                map.fitBounds(polyline.getBounds(), {padding: [50, 50]});
+            } else if (routePoints.length === 1) {
+                map.setView(routePoints[0], 13);
+            }
+        }
+
+        function updateDetails(stop) {
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('detail-content').classList.remove('hidden');
+
+            document.getElementById('detail-title').innerText = stop.name;
+            document.getElementById('detail-time').querySelector('span').innerText = stop.time;
+            document.getElementById('detail-desc').innerText = stop.desc || "無詳細說明";
+            document.getElementById('detail-cost').innerText = stop.cost || "免費 / 包含";
+            document.getElementById('detail-addr').innerText = stop.addr || "詳見地圖";
+            
+            // Tag Logic
+            const tagEl = document.getElementById('detail-tag');
+            const typeMap = { 'food': '餐飲', 'sight': '景點', 'transport': '交通', 'rest': '住宿', 'activity': '活動', 'gather': '集合' };
+            tagEl.innerText = typeMap[stop.type] || '其他';
+
+            // Items Tags
+            const itemsContainer = document.getElementById('detail-items');
+            itemsContainer.innerHTML = '';
+            if(stop.items && stop.items.length > 0) {
+                stop.items.forEach(item => {
+                    const span = document.createElement('span');
+                    span.className = "bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded border";
+                    span.innerText = item;
+                    itemsContainer.appendChild(span);
+                });
+            }
+
+            // Buttons
+            const btnWeb = document.getElementById('btn-website');
+            if (stop.web) {
+                btnWeb.href = stop.web;
+                btnWeb.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+                btnWeb.innerText = "官方網站";
+            } else {
+                btnWeb.href = "javascript:void(0)";
+                btnWeb.classList.add('opacity-50', 'cursor-not-allowed');
+                btnWeb.innerText = "無官網";
+            }
+
+            const btnGoogle = document.getElementById('btn-google');
+            // If specific mapUrl provided, use it, else search query
+            const mapLink = stop.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.name)}`;
+            btnGoogle.href = mapLink;
+
+            const btnRoute = document.getElementById('link-route');
+            btnRoute.href = mapLink;
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(itineraryData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "Yilan_Trip_2026.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    </script>
+</body>
+</html>
