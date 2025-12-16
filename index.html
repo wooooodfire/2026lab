@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2026 lab遊 - 宜蘭</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,12 +11,23 @@
 
     <style>
         body { font-family: 'Microsoft JhengHei', sans-serif; background-color: #f3f4f6; overflow: hidden; }
+        
+        /* RWD Height Adjustment */
         .h-screen-custom { height: 100vh; }
+        
+        /* Mobile adjustment for better scrolling experience */
+        @media (max-width: 768px) {
+            body { overflow: auto; height: 100vh; }
+            .mobile-stack { flex-direction: column; }
+            .mobile-h-40 { height: 40vh; }
+            .mobile-h-60 { height: 60vh; }
+        }
+
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #888; }
         
         .timeline-line {
             position: absolute;
@@ -29,33 +40,36 @@
         }
         .timeline-item:last-child .timeline-line { display: none; }
         .active-card { border-left: 4px solid #0d9488; background-color: #f0fdfa; }
-        #map { height: 50%; width: 100%; z-index: 10; }
-        #details-panel { height: 50%; overflow-y: auto; }
+        
+        #map { width: 100%; z-index: 10; }
+        /* Details panel scroll behavior */
+        #details-panel { overflow-y: auto; }
     </style>
 </head>
-<body class="text-gray-700">
+<body class="text-gray-700 flex flex-col h-screen">
 
-    <nav class="bg-teal-700 text-white p-4 shadow-lg flex justify-between items-center z-50 relative">
-        <div>
-            <h1 class="text-xl font-bold"><i class="fa-solid fa-map-location-dot mr-2"></i>2026 lab遊 - 宜蘭</h1>
-            <p class="text-xs opacity-80 mt-1">日期: 2026/01/27 - 01/29 | 預估人數: 20人+ | 總預算估計: <span id="nav-total-cost"></span></p>
+    <nav class="bg-teal-700 text-white p-3 md:p-4 shadow-lg flex flex-col md:flex-row justify-between items-center z-50 relative shrink-0 gap-2 md:gap-0">
+        <div class="text-center md:text-left">
+            <h1 class="text-lg md:text-xl font-bold"><i class="fa-solid fa-map-location-dot mr-2"></i>2026 lab遊 - 宜蘭</h1>
+            <p class="text-xs opacity-80 mt-1 hidden md:block">日期: 2026/01/27 - 01/29 | 預估人數: 20人+ | 總預算: <span id="nav-total-cost"></span></p>
+            <p class="text-xs opacity-80 mt-1 md:hidden">1/27 - 1/29 | <span id="nav-total-cost-mobile"></span></p>
         </div>
-        <div class="space-x-2">
-            <button onclick="exportJSON()" class="bg-teal-800 hover:bg-teal-900 text-xs px-3 py-2 rounded transition"><i class="fa-solid fa-code mr-1"></i> 下載 JSON</button>
-            <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-500 text-xs px-3 py-2 rounded transition"><i class="fa-solid fa-print mr-1"></i> 列印</button>
+        <div class="flex space-x-2 w-full md:w-auto justify-center">
+            <button onclick="exportJSON()" class="bg-teal-800 hover:bg-teal-900 text-xs px-3 py-2 rounded transition flex-1 md:flex-none"><i class="fa-solid fa-code mr-1"></i> JSON</button>
+            <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-500 text-xs px-3 py-2 rounded transition flex-1 md:flex-none"><i class="fa-solid fa-print mr-1"></i> 列印</button>
         </div>
     </nav>
 
-    <div class="flex h-[calc(100vh-80px)]">
+    <div class="flex flex-col md:flex-row flex-1 overflow-hidden relative">
         
-        <div class="w-full md:w-5/12 lg:w-4/12 bg-white border-r border-gray-200 flex flex-col shadow-xl z-20">
-            <div class="flex border-b overflow-x-auto" id="day-tabs">
+        <div class="w-full md:w-5/12 lg:w-4/12 bg-white border-r border-gray-200 flex flex-col shadow-xl z-20 h-[45vh] md:h-full order-1">
+            <div class="flex border-b overflow-x-auto shrink-0" id="day-tabs">
                 </div>
 
             <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 relative">
                 </div>
 
-            <div class="bg-gray-50 p-3 border-t text-sm text-gray-500">
+            <div class="bg-gray-50 p-2 md:p-3 border-t text-sm text-gray-500 shrink-0">
                 <div class="flex justify-between items-center cursor-pointer" onclick="toggleChecklist()">
                     <span class="font-bold"><i class="fa-solid fa-clipboard-check mr-1"></i> 每日檢查清單</span>
                     <i class="fa-solid fa-chevron-up" id="checklist-arrow"></i>
@@ -69,58 +83,59 @@
             </div>
         </div>
 
-        <div class="hidden md:flex flex-col w-7/12 lg:w-8/12 h-full relative">
+        <div class="flex flex-col w-full md:w-7/12 lg:w-8/12 h-[55vh] md:h-full relative order-2 bg-gray-100 border-t md:border-t-0 border-gray-300">
             
-            <div id="map"></div>
+            <div id="map" class="h-[200px] md:h-[50%] bg-gray-200 shrink-0"></div>
 
-            <div id="details-panel" class="bg-gray-50 p-6 border-t-4 border-teal-600 shadow-inner">
-                <div id="empty-state" class="flex flex-col items-center justify-center h-full text-gray-400">
-                    <i class="fa-solid fa-arrow-pointer text-4xl mb-4"></i>
-                    <p>請點選左側行程或地圖標記以查看詳細資訊</p>
-                    <p class="text-sm mt-2">住宿地址: 宜蘭縣三星鄉三星路二段601巷15弄100號</p>
+            <div id="details-panel" class="flex-1 bg-gray-50 p-4 md:p-6 border-t-4 border-teal-600 shadow-inner overflow-y-auto">
+                
+                <div id="empty-state" class="flex flex-col items-center justify-center h-full text-gray-400 py-8">
+                    <i class="fa-solid fa-arrow-pointer text-3xl md:text-4xl mb-4"></i>
+                    <p class="text-sm md:text-base">點選行程查看詳情</p>
+                    <p class="text-xs mt-2 text-center px-4">住宿: 三星路二段601巷15弄100號</p>
                 </div>
 
-                <div id="detail-content" class="hidden h-full flex flex-col">
-                    <div class="flex justify-between items-start mb-4">
+                <div id="detail-content" class="hidden flex flex-col pb-10 md:pb-0">
+                    <div class="flex justify-between items-start mb-3 md:mb-4">
                         <div>
-                            <span id="detail-tag" class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full font-bold mb-2 inline-block">景點</span>
-                            <h2 id="detail-title" class="text-2xl font-bold text-gray-800"></h2>
-                            <p id="detail-time" class="text-sm text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i> <span></span></p>
+                            <span id="detail-tag" class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full font-bold mb-1 md:mb-2 inline-block">景點</span>
+                            <h2 id="detail-title" class="text-xl md:text-2xl font-bold text-gray-800"></h2>
+                            <p id="detail-time" class="text-xs md:text-sm text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i> <span></span></p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-lg font-bold text-orange-600" id="detail-cost"></p>
-                            <p class="text-xs text-gray-400">預估費用</p>
+                        <div class="text-right whitespace-nowrap ml-2">
+                            <p class="text-base md:text-lg font-bold text-orange-600" id="detail-cost"></p>
+                            <p class="text-[10px] md:text-xs text-gray-400">預估費用</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
-                        <div class="lg:col-span-2 space-y-4">
-                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                                <h3 class="font-bold text-gray-700 mb-2 border-b pb-1">介紹與備註</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                        <div class="lg:col-span-2 space-y-3 md:space-y-4">
+                            <div class="bg-white p-3 md:p-4 rounded-lg shadow-sm border border-gray-100">
+                                <h3 class="font-bold text-gray-700 mb-2 border-b pb-1 text-sm md:text-base">介紹與備註</h3>
                                 <p id="detail-desc" class="text-gray-600 text-sm leading-relaxed"></p>
                                 <div id="detail-items" class="mt-3 flex flex-wrap gap-2"></div>
                             </div>
                             
-                            <div class="flex gap-3 mt-4">
-                                <a id="btn-google" href="#" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded shadow transition flex items-center justify-center">
-                                    <i class="fa-solid fa-location-arrow mr-2"></i> Google 導航
+                            <div class="flex gap-2 md:gap-3 mt-2 md:mt-4">
+                                <a id="btn-google" href="#" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded shadow transition flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-location-arrow mr-2"></i> 導航
                                 </a>
-                                <a id="btn-website" href="#" target="_blank" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white text-center py-2 rounded shadow transition flex items-center justify-center">
-                                    <i class="fa-solid fa-globe mr-2"></i> 官方網站
+                                <a id="btn-website" href="#" target="_blank" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white text-center py-2 rounded shadow transition flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-globe mr-2"></i> 官網
                                 </a>
                             </div>
                         </div>
 
-                        <div class="space-y-3">
+                        <div class="space-y-2 md:space-y-3">
                             <div class="bg-white p-3 rounded shadow-sm">
-                                <div class="text-xs text-gray-400">地點 / 地址</div>
+                                <div class="text-xs text-gray-400">地址</div>
                                 <div id="detail-addr" class="text-sm font-medium truncate"></div>
                             </div>
                             <div class="bg-white p-3 rounded shadow-sm">
-                                <div class="text-xs text-gray-400">相關連結</div>
+                                <div class="text-xs text-gray-400">操作</div>
                                 <div class="text-sm">
                                     <a id="link-route" href="#" target="_blank" class="text-teal-600 hover:underline block mb-1">
-                                        <i class="fa-solid fa-route mr-1"></i>前往此處路線
+                                        <i class="fa-solid fa-route mr-1"></i>規劃路線
                                     </a>
                                 </div>
                             </div>
@@ -217,17 +232,18 @@
             // Center roughly on Yilan
             map = L.map('map').setView([24.70, 121.75], 11);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
+                attribution: '© OpenStreetMap contributors'
             }).addTo(map);
+            
+            // Fix for map loading in wrong size initially
+            setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
         function calculateTotalCost() {
-            let total = 0;
-            // A simplified logic summing numbers found in cost strings for Day 1, 2(normal), 3
-            // In a real app, cost should be a number type.
-            const totalEl = document.getElementById('nav-total-cost');
-            // Hardcoded based on user input for display consistency
-            totalEl.innerText = "約 NT$8,125 /人"; 
+            // Simple logic for display
+            const costStr = "約 NT$8,125 /人"; 
+            document.getElementById('nav-total-cost').innerText = costStr; 
+            document.getElementById('nav-total-cost-mobile').innerText = costStr; 
         }
 
         function toggleChecklist() {
@@ -253,7 +269,7 @@
                 const isRain = day.isRain ? 'text-blue-600' : 'text-gray-700';
                 const bgClass = activeDayId === day.id ? 'border-b-4 border-teal-600 bg-gray-50 font-bold' : 'hover:bg-gray-50';
                 
-                btn.className = `flex-shrink-0 px-6 py-3 text-sm focus:outline-none transition ${bgClass} ${isRain}`;
+                btn.className = `flex-shrink-0 px-4 md:px-6 py-3 text-sm focus:outline-none transition whitespace-nowrap ${bgClass} ${isRain}`;
                 btn.innerHTML = day.isRain ? `<i class="fa-solid fa-cloud-showers-heavy mr-1"></i> ${day.date}` : day.date;
                 btn.onclick = () => {
                     activeDayId = day.id;
@@ -274,7 +290,7 @@
             // Header for Day
             const dayHeader = document.createElement('div');
             dayHeader.className = "mb-4 pb-2 border-b";
-            dayHeader.innerHTML = `<h2 class="text-xl font-bold text-teal-800">${dayData.title}</h2><p class="text-xs text-gray-500">點擊卡片查看地圖與詳情</p>`;
+            dayHeader.innerHTML = `<h2 class="text-lg md:text-xl font-bold text-teal-800">${dayData.title}</h2><p class="text-xs text-gray-500">點擊卡片查看詳情</p>`;
             container.appendChild(dayHeader);
 
             // Clear previous map markers
@@ -300,13 +316,13 @@
 
                 card.innerHTML = `
                     <div class="timeline-line"></div>
-                    <div class="absolute left-0 top-0 w-10 h-10 -ml-5 flex items-center justify-center rounded-full ${colorClass} text-white shadow-md z-10 border-4 border-white">
-                        <i class="fa-solid ${iconClass} text-sm"></i>
+                    <div class="absolute left-0 top-0 w-8 h-8 md:w-10 md:h-10 -ml-4 md:-ml-5 flex items-center justify-center rounded-full ${colorClass} text-white shadow-md z-10 border-4 border-white">
+                        <i class="fa-solid ${iconClass} text-xs md:text-sm"></i>
                     </div>
                     <div>
                         <span class="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">${stop.time}</span>
-                        <h3 class="font-bold text-gray-800 text-lg mt-1 group-hover:text-teal-700 transition">${stop.name}</h3>
-                        <p class="text-sm text-gray-500 line-clamp-2">${stop.desc}</p>
+                        <h3 class="font-bold text-gray-800 text-base md:text-lg mt-1 group-hover:text-teal-700 transition">${stop.name}</h3>
+                        <p class="text-xs md:text-sm text-gray-500 line-clamp-2">${stop.desc}</p>
                         ${stop.cost ? `<span class="text-xs font-medium text-orange-600 mt-1 block">${stop.cost}</span>` : ''}
                     </div>
                 `;
@@ -322,8 +338,16 @@
                     
                     // Map Pan
                     if(stop.lat && stop.lng) {
+                        map.invalidateSize(); // Ensure map is sized right
                         map.flyTo([stop.lat, stop.lng], 14);
-                        markers[index].openPopup();
+                        if(markers[index].getPopup) {
+                            markers[index].openPopup();
+                        }
+                    }
+
+                    // Mobile UX: Scroll to details if on small screen
+                    if (window.innerWidth < 768) {
+                        document.getElementById('details-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                 };
 
@@ -343,8 +367,8 @@
                     markers[index] = marker;
                     routePoints.push([stop.lat, stop.lng]);
                 } else {
-                     // Placeholder for non-mapped items to keep index sync
-                     markers[index] = { openPopup: () => {} }; 
+                      // Placeholder
+                      markers[index] = { openPopup: () => {} }; 
                 }
             });
 
@@ -389,7 +413,7 @@
             if (stop.web) {
                 btnWeb.href = stop.web;
                 btnWeb.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
-                btnWeb.innerText = "官方網站";
+                btnWeb.innerText = "官網";
             } else {
                 btnWeb.href = "javascript:void(0)";
                 btnWeb.classList.add('opacity-50', 'cursor-not-allowed');
@@ -397,7 +421,6 @@
             }
 
             const btnGoogle = document.getElementById('btn-google');
-            // If specific mapUrl provided, use it, else search query
             const mapLink = stop.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.name)}`;
             btnGoogle.href = mapLink;
 
