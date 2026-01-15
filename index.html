@@ -6,148 +6,135 @@
     <title>2026 lab遊 - 宜蘭</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: 'Microsoft JhengHei', sans-serif; background-color: #f3f4f6; overflow: hidden; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f8fafc; overflow: hidden; }
         
-        /* RWD Height Adjustment */
-        .h-screen-custom { height: 100vh; }
-        
-        /* Mobile adjustment for better scrolling experience */
-        @media (max-width: 768px) {
-            body { overflow: auto; height: 100vh; }
-            .mobile-stack { flex-direction: column; }
-            .mobile-h-40 { height: 40vh; }
-            .mobile-h-60 { height: 60vh; }
+        /* 電腦版分隔線 */
+        #resizer {
+            width: 8px;
+            cursor: col-resize;
+            background: #e2e8f0;
+            transition: background 0.2s;
+            z-index: 40;
+        }
+        #resizer:hover { background: #0d9488; }
+
+        /* 圖片輪播 */
+        .carousel-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            gap: 12px;
+        }
+        .carousel-container::-webkit-scrollbar { display: none; }
+        .carousel-item {
+            flex: 0 0 85%;
+            scroll-snap-align: center;
+            aspect-ratio: 16/9;
+            background: #cbd5e1;
+            border-radius: 12px;
+            object-fit: cover;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #888; }
-        
-        .timeline-line {
-            position: absolute;
-            left: 24px;
-            top: 40px;
-            bottom: -20px;
-            width: 2px;
-            background-color: #e5e7eb;
-            z-index: 0;
+        /* 行程卡片優化 */
+        .timeline-item.active-card {
+            border-left: 4px solid #0d9488;
+            background-color: #f0fdfa;
+            transform: translateX(4px);
         }
-        .timeline-item:last-child .timeline-line { display: none; }
-        .active-card { border-left: 4px solid #0d9488; background-color: #f0fdfa; }
-        
-        #map { width: 100%; z-index: 10; }
-        /* Details panel scroll behavior */
-        #details-panel { overflow-y: auto; }
+
+        @media (max-width: 768px) {
+            .mobile-panel {
+                position: absolute;
+                bottom: 0;
+                height: 50vh;
+                z-index: 50;
+                transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .mobile-panel.expanded { height: 85vh; }
+            #resizer { display: none; }
+            #map { height: 60vh !important; }
+        }
     </style>
 </head>
-<body class="text-gray-700 flex flex-col h-screen">
+<body class="flex flex-col h-screen">
 
-    <nav class="bg-teal-700 text-white p-3 md:p-4 shadow-lg flex flex-col md:flex-row justify-between items-center z-50 relative shrink-0 gap-2 md:gap-0">
-        <div class="text-center md:text-left">
-            <h1 class="text-lg md:text-xl font-bold"><i class="fa-solid fa-map-location-dot mr-2"></i>2026 lab遊 - 宜蘭</h1>
-            <p class="text-xs opacity-80 mt-1 hidden md:block">日期: 2026/01/27 - 01/29 | 預估人數: 20人+ | 總預算: <span id="nav-total-cost"></span></p>
-            <p class="text-xs opacity-80 mt-1 md:hidden">1/27 - 1/29 | <span id="nav-total-cost-mobile"></span></p>
+    <nav class="bg-teal-700 text-white p-4 shadow-md z-50 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold italic tracking-tight">YILAN 2026 LAB</h1>
+            <p class="text-xs opacity-75">1/27 - 1/29 · 宜蘭考察</p>
         </div>
-        <div class="flex space-x-2 w-full md:w-auto justify-center">
-            <button onclick="exportJSON()" class="bg-teal-800 hover:bg-teal-900 text-xs px-3 py-2 rounded transition flex-1 md:flex-none"><i class="fa-solid fa-code mr-1"></i> JSON</button>
-            <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-500 text-xs px-3 py-2 rounded transition flex-1 md:flex-none"><i class="fa-solid fa-print mr-1"></i> 列印</button>
+        <div class="text-right">
+            <span class="text-sm font-semibold bg-teal-800 px-3 py-1 rounded-full" id="total-cost-nav"></span>
         </div>
     </nav>
 
-    <div class="flex flex-col md:flex-row flex-1 overflow-hidden relative">
-        
-        <div class="w-full md:w-5/12 lg:w-4/12 bg-white border-r border-gray-200 flex flex-col shadow-xl z-20 h-[45vh] md:h-full order-1">
-            <div class="flex border-b overflow-x-auto shrink-0" id="day-tabs">
-                </div>
-
-            <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 relative">
-                </div>
-
-            <div class="bg-gray-50 p-2 md:p-3 border-t text-sm text-gray-500 shrink-0">
-                <div class="flex justify-between items-center cursor-pointer" onclick="toggleChecklist()">
-                    <span class="font-bold"><i class="fa-solid fa-clipboard-check mr-1"></i> 每日檢查清單</span>
-                    <i class="fa-solid fa-chevron-up" id="checklist-arrow"></i>
-                </div>
-                <div id="checklist-content" class="hidden mt-2 grid grid-cols-2 gap-2 text-xs">
-                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 身份證/健保卡</label>
-                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 雨具/保暖衣物</label>
-                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 現金/票券</label>
-                    <label class="flex items-center"><input type="checkbox" class="mr-1"> 行動電源</label>
-                </div>
+    <div class="flex flex-1 overflow-hidden relative">
+        <div id="left-panel" class="mobile-panel w-full md:w-[35%] bg-white flex flex-col shadow-2xl z-40">
+            <div class="md:hidden flex justify-center py-2 cursor-pointer" onclick="toggleMobilePanel()">
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
             </div>
+
+            <div class="flex border-b overflow-x-auto bg-gray-50 shrink-0" id="day-tabs"></div>
+
+            <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 space-y-2">
+                </div>
         </div>
 
-        <div class="flex flex-col w-full md:w-7/12 lg:w-8/12 h-[55vh] md:h-full relative order-2 bg-gray-100 border-t md:border-t-0 border-gray-300">
-            
-            <div id="map" class="h-[200px] md:h-[50%] bg-gray-200 shrink-0"></div>
+        <div id="resizer"></div>
 
-            <div id="details-panel" class="flex-1 bg-gray-50 p-4 md:p-6 border-t-4 border-teal-600 shadow-inner overflow-y-auto">
+        <div id="right-panel" class="flex-1 flex flex-col relative bg-gray-100">
+            <div id="map" class="flex-1 z-10"></div>
+            
+            <div id="details-overlay" class="hidden absolute right-4 top-4 bottom-4 w-80 bg-white/95 backdrop-blur shadow-2xl z-20 rounded-2xl border border-gray-100 p-5 overflow-y-auto transition-all">
+                <button onclick="closeDetails()" class="float-right text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
                 
-                <div id="empty-state" class="flex flex-col items-center justify-center h-full text-gray-400 py-8">
-                    <i class="fa-solid fa-arrow-pointer text-3xl md:text-4xl mb-4"></i>
-                    <p class="text-sm md:text-base">點選行程查看詳情</p>
-                    <p class="text-xs mt-2 text-center px-4">住宿: 三星路二段601巷15弄100號</p>
+                <div id="detail-header" class="mb-4">
+                    <span id="detail-tag" class="text-[10px] font-bold uppercase tracking-widest text-teal-600">景點</span>
+                    <h2 id="detail-title" class="text-2xl font-black text-gray-800 mt-1"></h2>
                 </div>
 
-                <div id="detail-content" class="hidden flex flex-col pb-10 md:pb-0">
-                    <div class="flex justify-between items-start mb-3 md:mb-4">
-                        <div>
-                            <span id="detail-tag" class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full font-bold mb-1 md:mb-2 inline-block">景點</span>
-                            <h2 id="detail-title" class="text-xl md:text-2xl font-bold text-gray-800"></h2>
-                            <p id="detail-time" class="text-xs md:text-sm text-gray-500 mt-1"><i class="fa-regular fa-clock mr-1"></i> <span></span></p>
+                <div class="carousel-container mb-4" id="detail-images">
+                    <div class="carousel-item flex items-center justify-center text-gray-400">圖片 1 (預留)</div>
+                    <div class="carousel-item flex items-center justify-center text-gray-400">圖片 2 (預留)</div>
+                    <div class="carousel-item flex items-center justify-center text-gray-400">圖片 3 (預留)</div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-400 mb-1">關於這裡</h4>
+                        <p id="detail-desc" class="text-sm text-gray-600 leading-relaxed"></p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-gray-50 p-3 rounded-xl">
+                            <span class="block text-[10px] text-gray-400">預計費用</span>
+                            <span id="detail-cost" class="font-bold text-orange-600"></span>
                         </div>
-                        <div class="text-right whitespace-nowrap ml-2">
-                            <p class="text-base md:text-lg font-bold text-orange-600" id="detail-cost"></p>
-                            <p class="text-[10px] md:text-xs text-gray-400">預估費用</p>
+                        <div class="bg-gray-50 p-3 rounded-xl">
+                            <span class="block text-[10px] text-gray-400">抵達時間</span>
+                            <span id="detail-time" class="font-bold text-gray-700"></span>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                        <div class="lg:col-span-2 space-y-3 md:space-y-4">
-                            <div class="bg-white p-3 md:p-4 rounded-lg shadow-sm border border-gray-100">
-                                <h3 class="font-bold text-gray-700 mb-2 border-b pb-1 text-sm md:text-base">介紹與備註</h3>
-                                <p id="detail-desc" class="text-gray-600 text-sm leading-relaxed"></p>
-                                <div id="detail-items" class="mt-3 flex flex-wrap gap-2"></div>
-                            </div>
-                            
-                            <div class="flex gap-2 md:gap-3 mt-2 md:mt-4">
-                                <a id="btn-google" href="#" target="_blank" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded shadow transition flex items-center justify-center text-sm">
-                                    <i class="fa-solid fa-location-arrow mr-2"></i> 導航
-                                </a>
-                                <a id="btn-website" href="#" target="_blank" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white text-center py-2 rounded shadow transition flex items-center justify-center text-sm">
-                                    <i class="fa-solid fa-globe mr-2"></i> 官網
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2 md:space-y-3">
-                            <div class="bg-white p-3 rounded shadow-sm">
-                                <div class="text-xs text-gray-400">地址</div>
-                                <div id="detail-addr" class="text-sm font-medium truncate"></div>
-                            </div>
-                            <div class="bg-white p-3 rounded shadow-sm">
-                                <div class="text-xs text-gray-400">操作</div>
-                                <div class="text-sm">
-                                    <a id="link-route" href="#" target="_blank" class="text-teal-600 hover:underline block mb-1">
-                                        <i class="fa-solid fa-route mr-1"></i>規劃路線
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                    <div id="extra-info" class="text-xs bg-yellow-50 p-3 rounded-lg border border-yellow-100 text-yellow-800">
+                        <i class="fa-solid fa-circle-info mr-1"></i> <span id="detail-notes">這裡可以塞更多備註文字...</span>
                     </div>
+
+                    <a id="btn-nav" href="#" target="_blank" class="block w-full bg-teal-600 text-white text-center py-3 rounded-xl font-bold shadow-lg shadow-teal-100 hover:bg-teal-700 transition">
+                        <i class="fa-solid fa-map-pin mr-2"></i>開始導航
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. Data Structure ---
+        // 資料結構保持不變，可由你原本的資料帶入
         const itineraryData = {
             meta: {
                 groupSize: "11人以上團體",
@@ -212,230 +199,113 @@
             ]
         };
 
-        // --- 2. State Management ---
-        let map;
-        let markers = [];
-        let polyline;
-        let activeDayId = "day1";
+        let map, activeDayId = "day1";
 
-        // --- 3. Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
+            initResizer();
             renderTabs();
             renderTimeline(activeDayId);
-            calculateTotalCost();
+            document.getElementById('total-cost-nav').innerText = "預算約 $8,125";
         });
 
-        // --- 4. Logic Functions ---
-
         function initMap() {
-            // Center roughly on Yilan
-            map = L.map('map').setView([24.70, 121.75], 11);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            
-            // Fix for map loading in wrong size initially
-            setTimeout(() => { map.invalidateSize(); }, 100);
+            map = L.map('map', { zoomControl: false }).setView([24.75, 121.75], 11);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
         }
 
-        function calculateTotalCost() {
-            // Simple logic for display
-            const costStr = "約 NT$8,125 /人"; 
-            document.getElementById('nav-total-cost').innerText = costStr; 
-            document.getElementById('nav-total-cost-mobile').innerText = costStr; 
+        // 電腦版分隔線拉動邏輯
+        function initResizer() {
+            const resizer = document.getElementById('resizer');
+            const leftPanel = document.getElementById('left-panel');
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                let offsetLeft = e.clientX;
+                let minWidth = 300;
+                let maxWidth = window.innerWidth * 0.6;
+                if (offsetLeft > minWidth && offsetLeft < maxWidth) {
+                    leftPanel.style.width = `${offsetLeft}px`;
+                    map.invalidateSize();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                document.body.style.cursor = 'default';
+            });
         }
 
-        function toggleChecklist() {
-            const content = document.getElementById('checklist-content');
-            const arrow = document.getElementById('checklist-arrow');
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                arrow.classList.remove('fa-chevron-up');
-                arrow.classList.add('fa-chevron-down');
-            } else {
-                content.classList.add('hidden');
-                arrow.classList.add('fa-chevron-up');
-                arrow.classList.remove('fa-chevron-down');
-            }
+        function toggleMobilePanel() {
+            document.getElementById('left-panel').classList.toggle('expanded');
         }
 
         function renderTabs() {
-            const tabsContainer = document.getElementById('day-tabs');
-            tabsContainer.innerHTML = '';
-            
+            const container = document.getElementById('day-tabs');
             itineraryData.days.forEach(day => {
-                const btn = document.createElement('button');
-                const isRain = day.isRain ? 'text-blue-600' : 'text-gray-700';
-                const bgClass = activeDayId === day.id ? 'border-b-4 border-teal-600 bg-gray-50 font-bold' : 'hover:bg-gray-50';
-                
-                btn.className = `flex-shrink-0 px-4 md:px-6 py-3 text-sm focus:outline-none transition whitespace-nowrap ${bgClass} ${isRain}`;
-                btn.innerHTML = day.isRain ? `<i class="fa-solid fa-cloud-showers-heavy mr-1"></i> ${day.date}` : day.date;
-                btn.onclick = () => {
-                    activeDayId = day.id;
-                    renderTabs(); // Re-render to update active style
-                    renderTimeline(day.id);
-                };
-                tabsContainer.appendChild(btn);
+                const active = activeDayId === day.id ? 'text-teal-600 border-b-2 border-teal-600 font-bold' : 'text-gray-400';
+                container.innerHTML += `<button onclick="switchDay('${day.id}')" class="px-6 py-4 text-sm whitespace-nowrap ${active}">${day.date}</button>`;
             });
+        }
+
+        function switchDay(id) {
+            activeDayId = id;
+            document.getElementById('day-tabs').innerHTML = '';
+            renderTabs();
+            renderTimeline(id);
         }
 
         function renderTimeline(dayId) {
             const container = document.getElementById('itinerary-list');
             container.innerHTML = '';
+            const day = itineraryData.days.find(d => d.id === dayId);
             
-            const dayData = itineraryData.days.find(d => d.id === dayId);
-            if(!dayData) return;
-
-            // Header for Day
-            const dayHeader = document.createElement('div');
-            dayHeader.className = "mb-4 pb-2 border-b";
-            dayHeader.innerHTML = `<h2 class="text-lg md:text-xl font-bold text-teal-800">${dayData.title}</h2><p class="text-xs text-gray-500">點擊卡片查看詳情</p>`;
-            container.appendChild(dayHeader);
-
-            // Clear previous map markers
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-            if(polyline) map.removeLayer(polyline);
-
-            const routePoints = [];
-
-            dayData.stops.forEach((stop, index) => {
-                // 1. Create List Item
+            day.stops.forEach((stop, i) => {
                 const card = document.createElement('div');
-                card.className = "timeline-item relative pl-8 pb-8 group cursor-pointer border-l-4 border-transparent hover:bg-gray-50 p-2 rounded transition";
-                card.dataset.index = index;
+                card.className = "timeline-item flex gap-4 p-4 rounded-xl cursor-pointer transition duration-200 border border-transparent hover:border-teal-100";
+                card.onclick = () => showDetails(stop, card);
                 
-                // Icon Logic
-                let iconClass = "fa-location-dot";
-                let colorClass = "bg-teal-500";
-                if(stop.type === 'food') { iconClass = "fa-utensils"; colorClass = "bg-orange-500"; }
-                if(stop.type === 'transport') { iconClass = "fa-bus"; colorClass = "bg-blue-500"; }
-                if(stop.type === 'rest') { iconClass = "fa-bed"; colorClass = "bg-indigo-500"; }
-                if(stop.type === 'gather') { iconClass = "fa-users"; colorClass = "bg-gray-500"; }
-
                 card.innerHTML = `
-                    <div class="timeline-line"></div>
-                    <div class="absolute left-0 top-0 w-8 h-8 md:w-10 md:h-10 -ml-4 md:-ml-5 flex items-center justify-center rounded-full ${colorClass} text-white shadow-md z-10 border-4 border-white">
-                        <i class="fa-solid ${iconClass} text-xs md:text-sm"></i>
-                    </div>
+                    <div class="text-xs font-mono font-bold text-gray-400 pt-1">${stop.time}</div>
                     <div>
-                        <span class="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">${stop.time}</span>
-                        <h3 class="font-bold text-gray-800 text-base md:text-lg mt-1 group-hover:text-teal-700 transition">${stop.name}</h3>
-                        <p class="text-xs md:text-sm text-gray-500 line-clamp-2">${stop.desc}</p>
-                        ${stop.cost ? `<span class="text-xs font-medium text-orange-600 mt-1 block">${stop.cost}</span>` : ''}
+                        <h3 class="font-bold text-gray-800">${stop.name}</h3>
+                        <p class="text-xs text-gray-500 line-clamp-1">${stop.desc}</p>
                     </div>
                 `;
-
-                // Click Event
-                card.onclick = () => {
-                    // UI Highlight
-                    document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active-card'));
-                    card.classList.add('active-card');
-                    
-                    // Show Detail
-                    updateDetails(stop);
-                    
-                    // Map Pan
-                    if(stop.lat && stop.lng) {
-                        map.invalidateSize(); // Ensure map is sized right
-                        map.flyTo([stop.lat, stop.lng], 14);
-                        if(markers[index].getPopup) {
-                            markers[index].openPopup();
-                        }
-                    }
-
-                    // Mobile UX: Scroll to details if on small screen
-                    if (window.innerWidth < 768) {
-                        document.getElementById('details-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                };
-
                 container.appendChild(card);
-
-                // 2. Add Map Marker
-                if (stop.lat && stop.lng) {
-                    const marker = L.marker([stop.lat, stop.lng]).addTo(map);
-                    marker.bindPopup(`<b>${stop.name}</b><br>${stop.time}`);
-                    marker.on('click', () => {
-                        updateDetails(stop);
-                        // Highlight list item
-                        document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active-card'));
-                        card.classList.add('active-card');
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    });
-                    markers[index] = marker;
-                    routePoints.push([stop.lat, stop.lng]);
-                } else {
-                      // Placeholder
-                      markers[index] = { openPopup: () => {} }; 
-                }
             });
-
-            // Draw Route Line
-            if (routePoints.length > 1) {
-                polyline = L.polyline(routePoints, {color: '#0d9488', weight: 4, opacity: 0.7, dashArray: '10, 10'}).addTo(map);
-                map.fitBounds(polyline.getBounds(), {padding: [50, 50]});
-            } else if (routePoints.length === 1) {
-                map.setView(routePoints[0], 13);
-            }
         }
 
-        function updateDetails(stop) {
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('detail-content').classList.remove('hidden');
+        function showDetails(stop, element) {
+            // UI 反饋
+            document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active-card'));
+            element.classList.add('active-card');
 
+            // 填入資料
             document.getElementById('detail-title').innerText = stop.name;
-            document.getElementById('detail-time').querySelector('span').innerText = stop.time;
-            document.getElementById('detail-desc').innerText = stop.desc || "無詳細說明";
-            document.getElementById('detail-cost').innerText = stop.cost || "免費 / 包含";
-            document.getElementById('detail-addr').innerText = stop.addr || "詳見地圖";
+            document.getElementById('detail-desc').innerText = stop.desc;
+            document.getElementById('detail-time').innerText = stop.time;
+            document.getElementById('detail-cost').innerText = stop.cost;
+            document.getElementById('btn-nav').href = `https://www.google.com/maps/dir/?api=1&destination=${stop.lat},${stop.lng}`;
             
-            // Tag Logic
-            const tagEl = document.getElementById('detail-tag');
-            const typeMap = { 'food': '餐飲', 'sight': '景點', 'transport': '交通', 'rest': '住宿', 'activity': '活動', 'gather': '集合' };
-            tagEl.innerText = typeMap[stop.type] || '其他';
+            // 顯示面板
+            const overlay = document.getElementById('details-overlay');
+            overlay.classList.remove('hidden');
 
-            // Items Tags
-            const itemsContainer = document.getElementById('detail-items');
-            itemsContainer.innerHTML = '';
-            if(stop.items && stop.items.length > 0) {
-                stop.items.forEach(item => {
-                    const span = document.createElement('span');
-                    span.className = "bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded border";
-                    span.innerText = item;
-                    itemsContainer.appendChild(span);
-                });
-            }
-
-            // Buttons
-            const btnWeb = document.getElementById('btn-website');
-            if (stop.web) {
-                btnWeb.href = stop.web;
-                btnWeb.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
-                btnWeb.innerText = "官網";
-            } else {
-                btnWeb.href = "javascript:void(0)";
-                btnWeb.classList.add('opacity-50', 'cursor-not-allowed');
-                btnWeb.innerText = "無官網";
-            }
-
-            const btnGoogle = document.getElementById('btn-google');
-            const mapLink = stop.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.name)}`;
-            btnGoogle.href = mapLink;
-
-            const btnRoute = document.getElementById('link-route');
-            btnRoute.href = mapLink;
+            // 地圖移動
+            map.flyTo([stop.lat, stop.lng], 15);
         }
 
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(itineraryData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "Yilan_Trip_2026.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+        function closeDetails() {
+            document.getElementById('details-overlay').classList.add('hidden');
+            document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active-card'));
         }
     </script>
 </body>
