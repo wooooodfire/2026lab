@@ -39,12 +39,13 @@
                 background: white;
                 border-radius: 20px 20px 0 0;
                 transform: translateY(100%);
-                /* 移除預設 transition，改由 JS 控制 class */
                 z-index: 100;
                 height: 85vh;
+                max-height: calc(100vh - 60px); /* Ensure some space at top */
                 box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
-                /* 確保不會被過度拖曳 */
-                touch-action: none; 
+                touch-action: none;
+                /* iOS safe area support */
+                padding-bottom: env(safe-area-inset-bottom, 0);
             }
             .mobile-bottom-sheet.transitioning {
                 transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
@@ -303,7 +304,7 @@
         <div id="mobile-backdrop" onclick="closeDetails()"></div>
         <div id="mobile-sheet" class="mobile-bottom-sheet md:hidden flex flex-col">
             <div class="sheet-handle shrink-0" onclick="closeDetails()"></div>
-            <div id="detail-scroll-area" class="overflow-y-auto flex-1 pb-32 px-4">
+            <div id="detail-scroll-area" class="overflow-y-auto flex-1 pb-48 px-4">
             </div>
         </div>
 
