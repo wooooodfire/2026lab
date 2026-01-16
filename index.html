@@ -40,12 +40,11 @@
                 border-radius: 20px 20px 0 0;
                 transform: translateY(100%);
                 z-index: 100;
-                height: 85vh;
-                max-height: calc(100vh - 60px); /* Ensure some space at top */
+                height: 90vh;
+                max-height: calc(100vh - 40px);
                 box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
                 touch-action: none;
-                /* iOS safe area support */
-                padding-bottom: env(safe-area-inset-bottom, 0);
+                padding-bottom: env(safe-area-inset-bottom, 20px);
             }
             .mobile-bottom-sheet.transitioning {
                 transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
@@ -303,7 +302,10 @@
 
         <div id="mobile-backdrop" onclick="closeDetails()"></div>
         <div id="mobile-sheet" class="mobile-bottom-sheet md:hidden flex flex-col">
-            <div class="sheet-handle shrink-0" onclick="closeDetails()"></div>
+            <!-- Expanded drag area for easier swipe-to-close -->
+            <div id="sheet-drag-area" class="shrink-0 py-3 cursor-grab">
+                <div class="sheet-handle"></div>
+            </div>
             <div id="detail-scroll-area" class="overflow-y-auto flex-1 pb-48 px-4">
             </div>
         </div>
@@ -626,16 +628,16 @@
         // 手機版下拉關閉功能
         function initMobileDrag() {
             const sheet = document.getElementById('mobile-sheet');
-            const handle = sheet.querySelector('.sheet-handle');
+            const dragArea = document.getElementById('sheet-drag-area');
             let startY = 0;
             let currentTranslate = 0;
             let isDragging = false;
 
-            // 觸摸開始
-            handle.addEventListener('touchstart', (e) => {
+            // 觸摸開始 - 整個頂部區域都可以拖曳
+            dragArea.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
                 isDragging = true;
-                sheet.classList.remove('transitioning'); // 移除過渡以便即時跟隨
+                sheet.classList.remove('transitioning');
             }, { passive: true });
 
             // 拖曳中
