@@ -280,7 +280,7 @@
         <div id="sidebar" class="w-full md:w-[400px] bg-white flex flex-col z-20 h-full shrink-0">
             <div class="flex p-2 gap-1 overflow-x-auto hide-scrollbar border-b" id="day-tabs"></div>
 
-            <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 pb-24 space-y-4">
             </div>
         </div>
 
@@ -332,19 +332,19 @@
                             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">重要物品</h3>
                             <ul class="space-y-3">
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-id" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">身分證 / 健保卡</span>
                                 </li>
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-student" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">!!學生證!!</span>
                                 </li>
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-cash" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">現金</span>
                                 </li>
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-phone" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">手機 / 充電線 / 行動電源</span>
                                 </li>
                             </ul>
@@ -355,19 +355,19 @@
                             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">衣物與生活</h3>
                             <ul class="space-y-3">
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-clothes" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">換洗衣物、毛巾 (3天2夜)</span>
                                 </li>
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-swim" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">泳衣 /泳帽/ 浴巾 (溫泉樂園必備)</span>
                                 </li>
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-rain" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">雨具 (宜蘭多雨，建議攜帶折傘)</span>
                                 </li>
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-toiletries" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">個人盥洗用品</span>
                                 </li>
                             </ul>
@@ -378,11 +378,11 @@
                             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">藥品與其他</h3>
                             <ul class="space-y-3">
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-medicine" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">個人常備藥物 (暈車藥等)</span>
                                 </li>
                                 <li class="flex items-start gap-3">
-                                    <input type="checkbox" class="mt-1 w-4 h-4 accent-teal-600 rounded">
+                                    <input type="checkbox" id="prep-slippers" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
                                     <span class="text-slate-700">拖鞋 / 輕便鞋</span>
                                 </li>
                             </ul>
@@ -569,6 +569,7 @@
             initMap();
             initResizer();
             initMobileDrag();
+            initPrepChecklist(); // Load and save prep checklist checkboxes
             renderTabs();
             renderTimeline(activeDayId);
             document.getElementById('nav-total-cost').innerText = "預算 NT$7,500/人";
@@ -584,6 +585,22 @@
                 setTimeout(() => openPrepModal(), 1000);
             }
         });
+
+        // Initialize prep checklist checkbox persistence
+        function initPrepChecklist() {
+            const checkboxes = document.querySelectorAll('.prep-check');
+            checkboxes.forEach(cb => {
+                // Load saved state
+                const saved = localStorage.getItem(cb.id);
+                if (saved === 'true') {
+                    cb.checked = true;
+                }
+                // Save on change
+                cb.addEventListener('change', () => {
+                    localStorage.setItem(cb.id, cb.checked);
+                });
+            });
+        }
 
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([24.75, 121.75], 11);
