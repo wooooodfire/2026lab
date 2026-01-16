@@ -317,11 +317,11 @@
 
         <div id="mobile-backdrop" onclick="closeDetails()"></div>
         <div id="mobile-sheet" class="mobile-bottom-sheet md:hidden flex flex-col">
-            <!-- Expanded drag area for easier swipe-to-close -->
-            <div id="sheet-drag-area" class="shrink-0 py-5 cursor-grab">
+            <!-- Expanded drag area for easier swipe-to-close (touch area is large, but looks compact) -->
+            <div id="sheet-drag-area" class="shrink-0 pt-2 pb-4 cursor-grab">
                 <div class="sheet-handle"></div>
             </div>
-            <div id="detail-scroll-area" class="overflow-y-auto flex-1 pb-48 px-4">
+            <div id="detail-scroll-area" class="overflow-y-auto flex-1 pb-24 px-4">
             </div>
         </div>
 
@@ -683,22 +683,47 @@
             document.addEventListener('mouseup', () => { isResizing = false; document.body.style.cursor = 'default'; resizer.classList.remove('resizing'); });
         }
 
-        // 手機版下拉關閉功能
+        // 手機版下拉關閉功能 (含滾動區域 overscroll 關閉)
         function initMobileDrag() {
             const sheet = document.getElementById('mobile-sheet');
             const dragArea = document.getElementById('sheet-drag-area');
+            const scrollArea = document.getElementById('detail-scroll-area');
             let startY = 0;
             let currentTranslate = 0;
             let isDragging = false;
+            let isOverscrollDrag = false;
 
-            // 觸摸開始 - 整個頂部區域都可以拖曳
+            // 觸摸開始 - 頂部拖曳區域
             dragArea.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
                 isDragging = true;
                 sheet.classList.remove('transitioning');
             }, { passive: true });
 
-            // 拖曳中
+            // 觸摸開始 - 滾動區域 (for overscroll dismiss)
+            scrollArea.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                isOverscrollDrag = false;
+            }, { passive: true });
+
+            // 滾動區域的 touchmove
+            scrollArea.addEventListener('touchmove', (e) => {
+                const currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                
+                // 如果在最頂部且嘗試往下拉
+                if (scrollArea.scrollTop <= 0 && diff > 0) {
+                    if (!isOverscrollDrag) {
+                        isOverscrollDrag = true;
+                        sheet.classList.remove('transitioning');
+                    }
+                    currentTranslate = diff * 0.5; // 阻尼效果
+                    sheet.style.transform = `translateY(${currentTranslate}px)`;
+                    e.preventDefault(); // 防止頁面滾動
+                }
+            }, { passive: false });
+
+            // 拖曳中 - 原本的頂部區域
             document.addEventListener('touchmove', (e) => {
                 if (!isDragging) return;
                 const currentY = e.touches[0].clientY;
@@ -713,16 +738,19 @@
 
             // 結束拖曳
             document.addEventListener('touchend', () => {
-                if (!isDragging) return;
-                isDragging = false;
-                sheet.classList.add('transitioning'); // 加回過渡效果
+                if (!isDragging && !isOverscrollDrag) return;
+                
+                sheet.classList.add('transitioning');
 
-                // 如果向下滑動超過 120px 則關閉，否則回彈
-                if (currentTranslate > 120) {
+                // 如果向下滑動超過 80px 則關閉
+                if (currentTranslate > 80) {
                     closeDetails();
                 } else {
-                    sheet.style.transform = ''; // 清除 inline style，回到 active class 的 translateY(0)
+                    sheet.style.transform = '';
                 }
+                
+                isDragging = false;
+                isOverscrollDrag = false;
                 currentTranslate = 0;
             });
         }
