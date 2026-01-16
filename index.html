@@ -295,7 +295,7 @@
         <div id="sidebar" class="w-full md:w-[400px] bg-white flex flex-col z-20 h-full shrink-0">
             <div class="flex p-2 gap-1 overflow-x-auto hide-scrollbar border-b" id="day-tabs"></div>
 
-            <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 pb-24 space-y-4">
+            <div id="itinerary-list" class="flex-1 overflow-y-auto p-4 pb-40 space-y-4">
             </div>
         </div>
 
@@ -318,7 +318,7 @@
         <div id="mobile-backdrop" onclick="closeDetails()"></div>
         <div id="mobile-sheet" class="mobile-bottom-sheet md:hidden flex flex-col">
             <!-- Expanded drag area for easier swipe-to-close -->
-            <div id="sheet-drag-area" class="shrink-0 py-3 cursor-grab">
+            <div id="sheet-drag-area" class="shrink-0 py-5 cursor-grab">
                 <div class="sheet-handle"></div>
             </div>
             <div id="detail-scroll-area" class="overflow-y-auto flex-1 pb-48 px-4">
@@ -346,21 +346,21 @@
                         <div>
                             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">重要物品</h3>
                             <ul class="space-y-3">
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-id" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">身分證 / 健保卡</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-id" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-id" class="text-slate-700 cursor-pointer select-none">身分證 / 健保卡</label>
                                 </li>
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-student" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">!!學生證!!</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-student" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-student" class="text-slate-700 cursor-pointer select-none">‼️學生證‼️</label>
                                 </li>
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-cash" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">現金</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-cash" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-cash" class="text-slate-700 cursor-pointer select-none">現金</label>
                                 </li>
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-phone" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">手機 / 充電線 / 行動電源</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-phone" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-phone" class="text-slate-700 cursor-pointer select-none">手機 / 充電線 / 行動電源</label>
                                 </li>
                             </ul>
                         </div>
@@ -369,21 +369,21 @@
                         <div>
                             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">衣物與生活</h3>
                             <ul class="space-y-3">
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-clothes" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">換洗衣物、毛巾 (3天2夜)</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-clothes" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-clothes" class="text-slate-700 cursor-pointer select-none">換洗衣物、毛巾 (3天2夜)</label>
                                 </li>
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-swim" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">泳衣 /泳帽/ 浴巾 (溫泉樂園必備)</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-swim" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-swim" class="text-slate-700 cursor-pointer select-none">泳衣 / 泳帽 / 浴巾 (溫泉樂園必備)</label>
                                 </li>
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-rain" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">雨具 (宜蘭多雨，建議攜帶折傘)</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-rain" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-rain" class="text-slate-700 cursor-pointer select-none">雨具 (宜蘭多雨，建議攜帶折傘)</label>
                                 </li>
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-toiletries" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">個人盥洗用品</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-toiletries" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-toiletries" class="text-slate-700 cursor-pointer select-none">個人盥洗用品</label>
                                 </li>
                             </ul>
                         </div>
@@ -392,13 +392,13 @@
                          <div>
                             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">藥品與其他</h3>
                             <ul class="space-y-3">
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-medicine" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">個人常備藥物 (暈車藥等)</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-medicine" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-medicine" class="text-slate-700 cursor-pointer select-none">個人常備藥物 (暈車藥等)</label>
                                 </li>
-                                <li class="flex items-start gap-3">
-                                    <input type="checkbox" id="prep-slippers" class="prep-check mt-1 w-4 h-4 accent-teal-600 rounded">
-                                    <span class="text-slate-700">拖鞋 / 輕便鞋</span>
+                                <li class="flex items-center gap-3">
+                                    <input type="checkbox" id="prep-slippers" class="prep-check w-5 h-5 accent-teal-600 rounded cursor-pointer">
+                                    <label for="prep-slippers" class="text-slate-700 cursor-pointer select-none">拖鞋 / 輕便鞋</label>
                                 </li>
                             </ul>
                         </div>
@@ -581,6 +581,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Auto-detect today's date and select matching tab
+            activeDayId = getActiveDay();
+            
             initMap();
             initResizer();
             initMobileDrag();
@@ -600,6 +603,29 @@
                 setTimeout(() => openPrepModal(), 1000);
             }
         });
+
+        // Detect today's date and return matching day ID, or default to day1
+        function getActiveDay() {
+            const today = new Date();
+            const month = today.getMonth() + 1; // 0-indexed
+            const day = today.getDate();
+            const todayStr = `${month}/${day}`; // e.g. "1/27"
+            
+            // Find matching day in itinerary
+            for (const d of itineraryData.days) {
+                // d.date format: "1/27 (二)"
+                const dateMatch = d.date.match(/^(\d+)\/(\d+)/);
+                if (dateMatch) {
+                    const m = parseInt(dateMatch[1]);
+                    const dd = parseInt(dateMatch[2]);
+                    if (m === month && dd === day) {
+                        return d.id;
+                    }
+                }
+            }
+            // Default to first day if no match
+            return itineraryData.days[0].id;
+        }
 
         // Initialize prep checklist checkbox persistence
         function initPrepChecklist() {
