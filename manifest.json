@@ -1,6 +1,6 @@
 {
-    "name": "宜蘭三日遊行程",
-    "short_name": "宜蘭行",
+    "name": "2026LAB宜蘭三日遊行程",
+    "short_name": "2026LAB宜蘭行",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#ffffff",
