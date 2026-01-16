@@ -82,9 +82,8 @@
             }
             .mobile-bottom-sheet.active { transform: translateY(0); }
             .sheet-handle {
-                width: 40px; height: 5px; background: #e2e8f0;
-                border-radius: 10px; margin: 12px auto;
-                cursor: grab;
+                width: 30px; height: 4px; background: #cbd5e1;
+                border-radius: 10px; margin: 0 auto;
             }
             #mobile-mini-map {
                 height: 200px;
@@ -430,7 +429,7 @@
     </div>
 
     <template id="detail-template">
-        <div class="flex justify-between items-start mb-4">
+        <div class="detail-header-drag flex justify-between items-start mb-4 cursor-grab">
             <div class="flex-1">
                 <span id="detail-tag" class="text-[10px] font-bold py-1 px-2 rounded-lg bg-teal-100 text-teal-700 uppercase mb-2 inline-block">景點</span>
                 <h2 id="detail-title" class="text-2xl font-black text-slate-900 leading-tight"></h2>
@@ -552,7 +551,7 @@
                     title: "萌寵與手作",
                     stops: [
                         { time: "09:30-10:00", name: "民宿集合", type: "gather", cost: "", desc: "早晨集合。", lat: 24.66275533164918, lng: 121.6189926687449, items: [], web: "", mapUrl: "", addr: "民宿", images: [] },
-                        { time: "10:00-12:00", name: "張美阿嬤農場", type: "activity", cost: "NT$200", desc: "位於山青水明的宜蘭三星鄉，有著輕鬆友善的環境，擁有400坪日式庭院，園內有著親切可愛的小鹿、水豚等動物，可親自體驗餵食與互動，園內也有租借和服服務，更有豐富多元的DIY活動可以參加，適合在假期時帶著家人親子活動造訪，歡迎來園內放鬆遊玩拍照！", lat: 24.66275533164918, lng: 121.6189926687449, items: ["張美阿嬤農場"], web: "", mapUrl: "https://maps.app.goo.gl/gDLFhRnSbRUuufaw9", addr: "宜蘭縣三星鄉", images: ["https://fullfenblog.tw/wp-content/uploads/2024/01/94.jpg"] },
+                        { time: "10:00-12:00", name: "張美阿嬤農場", type: "activity", cost: "NT$200", desc: "位於山青水明的宜蘭三星鄉，有著輕鬆友善的環境，擁有400坪日式庭院，園內有著親切可愛的小鹿、水豚等動物，可親自體驗餵食與互動，園內也有租借和服服務，更有豐富多元的DIY活動可以參加，適合在假期時帶著家人親子活動造訪，歡迎來園內放鬆遊玩拍照！", lat: 24.67501333792543, lng: 121.67564018650603, items: ["張美阿嬤農場"], web: "", mapUrl: "https://maps.app.goo.gl/gDLFhRnSbRUuufaw9", addr: "宜蘭縣三星鄉", images: ["https://fullfenblog.tw/wp-content/uploads/2024/01/94.jpg"] },
                         { time: "12:00-13:00", name: "午餐: 石頭厝(樂田蔬食)", type: "food", cost: "NT$500", desc: "隱藏在宜蘭三星鄉裡的樸實無菜單料理，老闆有一大片快樂農場，自種蔬菜和果實，自給自足以外還可以做菜給客人吃！", lat: 24.684922359115273, lng: 121.65308039672868, items: [], web: "", mapUrl: "https://maps.app.goo.gl/RwGanYreCYsmt6Ks7", addr: "宜蘭縣三星鄉", images: ["https://bjsmile.tw/wp-content/uploads/2023/05/3.3-jpg.webp", "https://bjsmile.tw/wp-content/uploads/2023/05/16-4-jpg.webp"] },
                         { time: "13:00-15:30", name: "三星四季青花瓷", type: "activity", cost: "NT$800", desc: "  在活動中我們將揭露三星四季獨創的青花瓷拓繪手法，將有趣圖像，轉化為青花瓷創作元素，老師帶領參與者了解青花瓷器的特質和工藝的技術，用三星四季獨創的手法一起體驗青花瓷創作，讓自然風景、田間動物、植物等自然環境素材皆成為手工陶瓷器皿上最具故事性的圖騰。\n\n課程內容：\n - 了解手工器皿的特質與青花圖騰的設計方法\n - 青花畫法與釉料調製\n - 親手繪製青花圖案\n - 紙雕青花圖案動手做\n - 青花瓷拓印\n - 刻線、修改與完成", lat: 24.671655013390385, lng: 121.67625953067905, items: ["三星四季青花瓷"], web: "https://3s4s.weebly.com/39636395112796321205.html", mapUrl: "https://maps.app.goo.gl/XZuLYknkVNtKPRix7", addr: "宜蘭縣三星鄉", images: ["https://3s4s.weebly.com/uploads/5/7/6/3/57635835/google-01_orig.jpg", "https://3s4s.weebly.com/uploads/5/7/6/3/57635835/28061489o_orig.jpg", "https://3s4s.weebly.com/uploads/5/7/6/3/57635835/dsc-4357_orig.jpg"] },
                         { time: "15:30-17:00", name: "宜蘭 → 台北車站", type: "transport", cost: "", desc: "搭車返回台北，結束旅程。", lat: 25.0478, lng: 121.5170, items: [], web: "", mapUrl: "", addr: "台北車站", images: [] }
@@ -641,6 +640,19 @@
                     localStorage.setItem(cb.id, cb.checked);
                 });
             });
+            
+            // Backup: Add click listener to labels (in case 'for' attribute doesn't work)
+            const labels = document.querySelectorAll('label[for^="prep-"]');
+            labels.forEach(label => {
+                label.addEventListener('click', (e) => {
+                    const cb = document.getElementById(label.getAttribute('for'));
+                    if (cb) {
+                        cb.checked = !cb.checked;
+                        cb.dispatchEvent(new Event('change')); // Trigger save
+                    }
+                    e.preventDefault(); // Prevent double-toggle
+                });
+            });
         }
 
         function initMap() {
@@ -692,18 +704,27 @@
             let currentTranslate = 0;
             let isDragging = false;
             let isOverscrollDrag = false;
+            let canOverscroll = false;
 
-            // 觸摸開始 - 頂部拖曳區域
-            dragArea.addEventListener('touchstart', (e) => {
+            // 觸摸開始 - 頂部拖曳區域 and 標題區域
+            const startDragHandler = (e) => {
                 startY = e.touches[0].clientY;
                 isDragging = true;
                 sheet.classList.remove('transitioning');
-            }, { passive: true });
-
-            // 觸摸開始 - 滾動區域 (for overscroll dismiss)
+            };
+            
+            dragArea.addEventListener('touchstart', startDragHandler, { passive: true });
+            
+            // 使用事件委派監聽標題區域的拖曳 (因為它在 template 內，稍後才會被渲染)
             scrollArea.addEventListener('touchstart', (e) => {
+                const headerDrag = e.target.closest('.detail-header-drag');
+                if (headerDrag) {
+                    startDragHandler(e);
+                    return;
+                }
                 startY = e.touches[0].clientY;
                 isOverscrollDrag = false;
+                canOverscroll = scrollArea.scrollTop <= 5;
             }, { passive: true });
 
             // 滾動區域的 touchmove
@@ -711,15 +732,19 @@
                 const currentY = e.touches[0].clientY;
                 const diff = currentY - startY;
                 
-                // 如果在最頂部且嘗試往下拉
-                if (scrollArea.scrollTop <= 0 && diff > 0) {
+                // 如果在最頂部且嘗試往下拉 (diff > 10 避免誤觸)
+                if (canOverscroll && scrollArea.scrollTop <= 0 && diff > 10) {
                     if (!isOverscrollDrag) {
                         isOverscrollDrag = true;
                         sheet.classList.remove('transitioning');
                     }
-                    currentTranslate = diff * 0.5; // 阻尼效果
+                    currentTranslate = (diff - 10) * 0.6; // 阻尼效果
                     sheet.style.transform = `translateY(${currentTranslate}px)`;
                     e.preventDefault(); // 防止頁面滾動
+                } else if (isOverscrollDrag && diff <= 10) {
+                    // 如果往上滑回去 取消 overscroll
+                    isOverscrollDrag = false;
+                    sheet.style.transform = '';
                 }
             }, { passive: false });
 
@@ -742,8 +767,8 @@
                 
                 sheet.classList.add('transitioning');
 
-                // 如果向下滑動超過 80px 則關閉
-                if (currentTranslate > 80) {
+                // 如果向下滑動超過 60px 則關閉
+                if (currentTranslate > 60) {
                     closeDetails();
                 } else {
                     sheet.style.transform = '';
@@ -751,6 +776,7 @@
                 
                 isDragging = false;
                 isOverscrollDrag = false;
+                canOverscroll = false;
                 currentTranslate = 0;
             });
         }
