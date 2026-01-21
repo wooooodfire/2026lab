@@ -152,6 +152,37 @@
         }
         .map-fab:active { transform: scale(0.95); }
 
+        /* 訂早餐固定按鈕 */
+        .breakfast-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 0.85rem 1.5rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #fb923c, #f97316);
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 20px rgba(249, 115, 22, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            z-index: 95;
+            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
+        }
+        .breakfast-btn i {
+            font-size: 1rem;
+        }
+        .breakfast-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.45);
+        }
+        .breakfast-btn:active {
+            transform: scale(0.97);
+        }
+
         /* 手機版地圖容器樣式覆寫 */
         @media (max-width: 768px) {
             /* 預設隱藏地圖容器 */
@@ -179,6 +210,16 @@
             }
             #mobile-map-close {
                 display: flex !important;
+            }
+
+            .map-fab {
+                bottom: 92px;
+            }
+            .breakfast-btn {
+                bottom: 20px;
+                right: 20px;
+                font-size: 0.9rem;
+                padding-inline: 1.25rem;
             }
         }
 
@@ -328,6 +369,12 @@
         <button id="floating-map-btn" onclick="toggleMap(true)" class="map-fab md:hidden">
             <i class="fa-solid fa-map"></i>
         </button>
+
+        <!-- 訂早餐固定按鈕 -->
+        <a href="https://wooooodfire.github.io/2026lab/order" target="_blank" rel="noopener noreferrer" class="breakfast-btn" aria-label="訂早餐">
+            <i class="fa-solid fa-mug-saucer"></i>
+            <span>訂早餐</span>
+        </a>
 
         <!-- 行前準備 Modal -->
         <div id="prep-modal" class="modal fixed inset-0 z-[3000] flex items-center justify-center p-4">
