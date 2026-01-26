@@ -290,8 +290,22 @@
 
         async function deleteOrder(rowId) {
             if (!confirm('確定要刪除這筆餐點嗎？')) return;
+            
+            // 新增：抓取目前輸入框的名字
+            const userName = document.getElementById('userName').value.trim();
+            
             document.getElementById('myHistoryList').style.opacity = '0.5';
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', rowId }) });
+            
+            // 在 body 裡面加入 userName
+            await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'delete', 
+                    rowId: rowId,
+                    userName: userName  // 送出名字供後端檢查
+                }) 
+            });
+            
             await refreshData();
             document.getElementById('myHistoryList').style.opacity = '1';
         }
