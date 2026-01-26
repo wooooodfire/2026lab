@@ -168,7 +168,8 @@
             align-items: center;
             gap: 0.5rem;
             text-decoration: none;
-            z-index: 95;
+            /* 修改這裡：確保大於 1000 */
+            z-index: 1100; 
             transition: transform 0.2s, box-shadow 0.2s;
             white-space: nowrap;
         }
@@ -216,10 +217,14 @@
                 bottom: 92px;
             }
             .breakfast-btn {
-                bottom: 20px;
-                right: 20px;
-                font-size: 0.9rem;
-                padding-inline: 1.25rem;
+                    /* 如果按鈕會擋到地圖標記，可以稍微往左移或調整高度 */
+                    bottom: 20px;
+                    right: 20px;
+                    z-index: 2001; /* 確保在手機全螢幕地圖之上 */
+            }
+            /* 避免按鈕擋到地圖縮放鍵 */
+            .leaflet-bottom.leaflet-right {
+                bottom: 80px !important;
             }
         }
 
