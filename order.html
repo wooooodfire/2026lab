@@ -23,6 +23,7 @@
         <div class="px-6 mb-2">
             <label class="block text-[10px] font-bold text-gray-400 mb-1 ml-1 tracking-widest uppercase">Your Name</label>
             <input type="text" id="userName" oninput="handleNameChange()" class="w-full bg-white border-2 border-gray-100 shadow-sm p-4 rounded-2xl outline-none focus:border-green-500 transition-all text-lg font-bold" placeholder="請輸入姓名">
+            <p id="nameError" class="text-red-500 text-xs font-bold mt-2 ml-1 hidden">⚠️ 您不在點餐名單中</p>
         </div>
 
         <div class="flex px-6 mb-6 text-center font-bold text-gray-400 border-b">
@@ -79,6 +80,7 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbzg6nQRpwwgOkcIsPK-1RDmRBGHc6akdn95qH4q8ccvd53q5EPUfF47hufJcFJzhWNpGA/exec';
         let allOrders = [];
+        let allowedUsers = [];
         let isDataLoading = false;
 
         window.onload = async () => {
@@ -95,6 +97,7 @@
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 allOrders = data.orders;
+                allowedUsers = data.allowedNames; // 儲存名單
                 renderMenu(data.menu);
             } catch (e) {
                 console.error('載入失敗', e);
@@ -104,11 +107,34 @@
             } finally {
                 isDataLoading = false;
             }
+            handleNameChange(); // 載入後立即檢查一次
             updateMyHistory();
         }
 
+        // 核心檢查函式
+        function checkUserValidity() {
+            const name = document.getElementById('userName').value.trim();
+            const errorEl = document.getElementById('nameError');
+            const inputEl = document.getElementById('userName');
+            
+            if (!name) return false;
+            
+            const isValid = allowedUsers.includes(name);
+            
+            if (isValid) {
+                errorEl.classList.add('hidden');
+                inputEl.classList.replace('border-red-400', 'border-gray-100');
+            } else {
+                errorEl.classList.remove('hidden');
+                inputEl.classList.add('border-red-400');
+            }
+            return isValid;
+        }
+        
         function handleNameChange() {
-            localStorage.setItem('u', document.getElementById('userName').value.trim());
+            const name = document.getElementById('userName').value.trim();
+            localStorage.setItem('u', name);
+            checkUserValidity(); // 檢查姓名
             updateMyHistory();
         }
 
@@ -212,14 +238,18 @@
         function updateMyHistory() {
             const name = document.getElementById('userName').value.trim();
             const container = document.getElementById('myHistoryList');
+            
             if (isDataLoading) {
                 showHistoryLoadingState();
                 return;
             }
-            if (!name) {
-                container.innerHTML = '<div class="text-center py-20 text-gray-400 font-medium italic">請輸入姓名以讀取紀錄...</div>';
+            
+            // 若不合法則清空紀錄顯示
+            if (!name || !allowedUsers.includes(name)) {
+                container.innerHTML = '<div class="text-center py-20 text-gray-400 font-medium italic">請輸入有效姓名以讀取紀錄...</div>';
                 return;
             }
+        
             const myOrders = allOrders.filter(o => o['姓名'] === name);
             if (myOrders.length === 0) {
                 container.innerHTML = `<div class="text-center py-20 text-gray-400 font-medium">找不到「${name}」的訂單紀錄</div>`;
@@ -268,8 +298,14 @@
 
         function showConfirm() {
             const name = document.getElementById('userName').value.trim();
-            const date = document.getElementById('orderDate').value;
             if (!name) return alert('請先輸入您的姓名');
+            
+            // 新增：檢查名單
+            if (!checkUserValidity()) {
+                return alert('抱歉，您的姓名不在「總計」名單中，無法點餐。');
+            }
+        
+            const date = document.getElementById('orderDate').value;
             let listHtml = '';
             let hasItems = false;
             document.querySelectorAll('.qty').forEach(i => {
